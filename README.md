@@ -86,7 +86,9 @@ If you liked STUdio, you will also like:
   teller device.
 * [Studio-Pack-Generator](https://github.com/jersou/studio-pack-generator) convert a folder or a RSS URL to Studio pack
   zip for Lunii device, see file structure below.
-* [Studio-Pack-Generator](https://github.com/Seph29/LuniiKit_App) is a launcher for STUdio.
+* [InullKit](https://github.com/Seph29/LuniiKit_App) is a launcher for STUdio.
+* [Générateur de Noms de Pack Lunii](https://github.com/LuckyTheCookie/lunii_name_generator) is a Lunii pack name
+  generator.
 
 LICENSE
 -------
