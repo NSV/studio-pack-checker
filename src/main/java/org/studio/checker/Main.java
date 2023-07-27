@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -38,14 +39,17 @@ public class Main implements Callable<Integer> {
     @CommandLine.Parameters(index = "0", description = "The folder where are packs or the filepath of a unique pack.")
     private Path inputPath;
 
+    @CommandLine.Option(names = {"-o", "--outputdir"}, description = "The output folder, same as input folder if not specified")
+    private Path outputPath;
+
     @CommandLine.Option(names = {"-r", "--repair"}, description = "Repair if needed the pack file")
     private boolean repair;
 
     @CommandLine.Option(names = {"-c", "--compress"}, description = "Compress (and repair) if needed the pack file")
     private boolean compress;
 
-    @CommandLine.Option(names = {"-o", "--overwrite"}, description = "Overwrite the pack")
-    private boolean overwrite;
+    @CommandLine.Option(names = {"-f", "--force"}, description = "Overwrite the pack")
+    private boolean force;
 
     @CommandLine.Option(names = {"-p", "--parallel"}, description = "Parallel process")
     private boolean parallel;
@@ -72,7 +76,11 @@ public class Main implements Callable<Integer> {
     @Override
     public Integer call() throws Exception { // your business logic goes here...
         log.info("Starting studio-pack-checker");
+
         repair = compress || repair; // If compress is activated, so repair too
+        if (outputPath == null) {
+            outputPath = Files.isDirectory(inputPath) ? inputPath : inputPath.getParent();
+        }
 
         if (Files.isDirectory(inputPath)) {
             try (Stream<Path> list = Files.list(inputPath)) {
@@ -84,45 +92,45 @@ public class Main implements Callable<Integer> {
         return 0;
     }
 
-    private void checkPackWithResult(Path path) {
-        if (!path.toString().endsWith(CONVERTED_SPC_ZIP)) {
-            log.info("Checking {} pack", path.getFileName());
-            CheckResult result = checkPack(path);
+    private void checkPackWithResult(Path inputPackPath) {
+        if (!inputPackPath.toString().endsWith(CONVERTED_SPC_ZIP)) {
+            log.info("Checking {} pack", inputPackPath.getFileName());
+            CheckResult result = checkPack(inputPackPath);
             result.showResult();
             log.info("------------------------");
         }
     }
 
-    public CheckResult checkPack(Path inputPath) {
-        PackFormat format = PackFormat.fromPath(inputPath);
+    public CheckResult checkPack(Path inputPackPath) {
+        PackFormat format = PackFormat.fromPath(inputPackPath);
         if (!PackFormat.ARCHIVE.equals(format)) {
-            return CheckResult.ko(inputPath, "Wrong extension, only check zip files");
+            return CheckResult.ko(inputPackPath, "Wrong extension, only check zip files");
         }
 
         try {
-            StoryPackMetadata metadata = format.getReader().readMetadata(inputPath);
+            StoryPackMetadata metadata = format.getReader().readMetadata(inputPackPath);
 
             if (metadata == null) {
-                return CheckResult.ko(inputPath, "No story.json found");
+                return CheckResult.ko(inputPackPath, "No story.json found");
             }
 
             if (metadata.getThumbnail() == null) {
                 log.warn("No thumbnail found");
             }
         } catch (IOException e) {
-            return CheckResult.ko(inputPath, e);
+            return CheckResult.ko(inputPackPath, e);
         }
 
         try {
-            StoryPack pack = format.getReader().read(inputPath);
-            Path outputPath;
-            if (repair && !overwrite) {
-                outputPath = Path.of(inputPath.getParent() + "/" + inputPath.getFileName() + CONVERTED_SPC_ZIP);
-                if (Files.exists(outputPath)) {
-                    return CheckResult.ko(inputPath, "Target file already exists");
+            StoryPack pack = format.getReader().read(inputPackPath);
+            Path outputPackPath;
+            if (repair && !force) {
+                outputPackPath = Paths.get(outputPath.toString() + "/" + inputPackPath.getFileName().toString() + CONVERTED_SPC_ZIP);
+                if (Files.exists(outputPackPath)) {
+                    return CheckResult.ko(inputPackPath, "Target file already exists");
                 }
             } else {
-                outputPath = inputPath;
+                outputPackPath = inputPackPath;
             }
 
             try {
@@ -130,17 +138,17 @@ public class Main implements Callable<Integer> {
                     if (increaseVersion) {
                         pack.setVersion((short) (pack.getVersion() + 1));
                     }
-                    format.getWriter().write(pack, outputPath, true);
-                    return compress ? CheckResult.compress(outputPath, pack) : CheckResult.repair(outputPath, pack);
+                    format.getWriter().write(pack, outputPackPath, true);
+                    return compress ? CheckResult.compress(outputPackPath, pack) : CheckResult.repair(outputPackPath, pack);
                 }
             } catch (StoryTellerException e) {
                 // TODO Need to handle these errors
-                return CheckResult.ko(inputPath, e);
+                return CheckResult.ko(inputPackPath, e);
             }
 
-            return CheckResult.ok(inputPath, pack);
+            return CheckResult.ok(inputPackPath, pack);
         } catch (IOException e) {
-            return CheckResult.ko(inputPath, e);
+            return CheckResult.ko(inputPackPath, e);
         }
     }
 
