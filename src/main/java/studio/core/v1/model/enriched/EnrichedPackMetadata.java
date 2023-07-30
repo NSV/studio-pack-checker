@@ -6,6 +6,7 @@
 
 package studio.core.v1.model.enriched;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 @Getter
@@ -17,5 +18,6 @@ public class EnrichedPackMetadata {
 
     private String title;
     private String description;
+    @JsonIgnore
     private byte[] thumbnail;
 }

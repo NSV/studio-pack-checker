@@ -35,4 +35,8 @@ public abstract class Node {
         this.uuid = uuid;
         this.enriched = enriched;
     }
+
+    public UUID getId() {
+        return uuid;
+    }
 }
