@@ -34,19 +34,19 @@ public class ImageProcessor implements Function<MediaAsset, byte[]> {
     @Override
     public byte[] apply(MediaAsset mediaAsset) {
         byte[] rawData = mediaAsset.getRawData();
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(rawData)) {
-            BufferedImage img = ImageIO.read(bais);
+        if (MediaAssetType.BMP != mediaAsset.getType() || rawData[28] != 0x04 || rawData[30] != 0x02) {
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(rawData)) {
+                BufferedImage img = ImageIO.read(bais);
 
-            log.debug("Checking image dimensions");
-            int width = img.getWidth();
-            int height = img.getHeight();
-            if (width != WIDTH || height != HEIGHT) {
-                throw new IllegalArgumentException("Wrong image dimensions : " + width + "x" + height + " instead of " + WIDTH + "x" + HEIGHT);
-            }
+                log.debug("Checking image dimensions");
+                int width = img.getWidth();
+                int height = img.getHeight();
+                if (width != WIDTH || height != HEIGHT) {
+                    throw new IllegalArgumentException("Wrong image dimensions : " + width + "x" + height + " instead of " + WIDTH + "x" + HEIGHT);
+                }
 
-            if (compress) {
-                // Convert to 4-bits depth / RLE encoding BMP
-                if (MediaAssetType.BMP != mediaAsset.getType() || rawData[28] != 0x04 || rawData[30] != 0x02) {
+                if (compress) {
+                    // Convert to 4-bits depth / RLE encoding BMP
                     log.debug("Converting image asset into 4-bits/RLE BMP");
                     rawData = ImageConversion.anyToRLECompressedBitmap(rawData);
                 }
