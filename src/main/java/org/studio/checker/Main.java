@@ -36,6 +36,8 @@ public class Main implements Callable<Integer> {
 
     private static final String CONVERTED_SPC_ZIP = "_converted_spc.zip";
 
+    private static long startTime = System.currentTimeMillis();
+
     @CommandLine.Parameters(index = "0", description = "The folder where are packs or the filepath of a unique pack.")
     private Path inputPath;
 
@@ -69,7 +71,7 @@ public class Main implements Callable<Integer> {
         cmd.setDefaultValueProvider(new CommandLine.PropertiesDefaultProvider(defaultsFile));
         int exitCode = cmd.execute(args);
 
-        log.info("End of studio-pack-checker");
+        log.info("End of studio-pack-checker in {} seconds", (System.currentTimeMillis() - startTime) / 1000);
         System.exit(exitCode);
     }
 
@@ -137,6 +139,9 @@ public class Main implements Callable<Integer> {
                 if (recompress(pack)) {
                     if (increaseVersion) {
                         pack.setVersion((short) (pack.getVersion() + 1));
+                    }
+                    if (force) {
+                        outputPackPath.toFile().delete();
                     }
                     format.getWriter().write(pack, outputPackPath, true);
                     return compress ? CheckResult.compress(outputPackPath, pack) : CheckResult.repair(outputPackPath, pack);
