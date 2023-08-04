@@ -6,6 +6,7 @@
 
 package studio.core.v1.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,10 +21,11 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true, exclude = { "okTransition", "homeTransition" })
+@EqualsAndHashCode(callSuper = true, exclude = {"okTransition", "homeTransition"})
+@JsonInclude
 public class StageNode extends Node {
 
-    private Boolean squareOne; // first node only
+    private Boolean squareOne = false; // first node only
     private MediaAsset image;
     private MediaAsset audio;
     private Transition okTransition;
@@ -31,7 +33,7 @@ public class StageNode extends Node {
     private ControlSettings controlSettings;
 
     public StageNode(UUID uuid, MediaAsset image, MediaAsset audio, Transition okTransition,
-            Transition homeTransition, ControlSettings controlSettings, EnrichedNodeMetadata enriched) {
+                     Transition homeTransition, ControlSettings controlSettings, EnrichedNodeMetadata enriched) {
         super(uuid, enriched);
         this.image = image;
         this.audio = audio;
